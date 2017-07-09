@@ -1,0 +1,327 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/fetch-polyfill/fetch-polyfill.html">
+
+<script>
+(function() {
+'use strict';
+var _groups;
+var _packages = {};
+var _allElements = [];
+
+const DataObserver = {
+  elements: {},
+  bundles: {},
+  listeners: [],
+  attachListener: function(aware) {
+    if (this.listeners.indexOf(aware) === -1) {
+      this.listeners.push(aware);
+      aware.set('groups', _groups);
+    }
+  },
+
+  detachListener: function(aware) {
+    var index = this.listeners.indexOf(aware);
+    if (index !== -1) {
+      this.listeners.splice(index, 1);
+    }
+  },
+
+  addPackage: function(packageName, json) {
+    _packages[packageName] = json;
+    this._notify('packageData', json, 'packageName', packageName);
+    this.allElements = this.allElements.concat(json.elements);
+  },
+
+  addElements: function(elementName, json) {
+    this.elements[elementName] = json;
+    this._notify('elementData', json, 'elementName', elementName);
+  },
+
+  addBundle: function(bundleName, json) {
+    this.bundles[bundleName] = json;
+    this._notify('bundleData', json, 'bundle', bundleName);
+  },
+
+  _notify: function(path, value, property, propertyValue) {
+    this.listeners.forEach(listener => {
+      if (property && propertyValue) {
+        if (listener[property] === propertyValue) {
+          listener.set(path, value);
+        }
+      } else {
+        listener.set(path, value);
+      }
+    });
+  }
+};
+Object.defineProperty(DataObserver, 'groups', {
+  get: function() {
+    return _groups;
+  },
+  set: function(value) {
+    _groups = value;
+    this._notify('groups', value);
+  },
+  enumerable: true,
+  configurable: false
+});
+Object.defineProperty(DataObserver, 'packages', {
+  get: function() {
+    return _packages;
+  },
+  set: function(value) {
+    _packages = value;
+    var name = Object.keys(value)[0];
+    this._notify('packageData', value[name]);
+  },
+  enumerable: true,
+  configurable: false
+});
+Object.defineProperty(DataObserver, 'allElements', {
+  get: function() {
+    return _allElements;
+  },
+  set: function(value) {
+    _allElements = value;
+    this._notify('allElements', value);
+  },
+  enumerable: true,
+  configurable: false
+});
+/**
+ * @customElement
+ * @polymer
+ */
+class CatalogData extends Polymer.Element {
+  static get is() {
+    return 'catalog-data';
+  }
+
+  static get properties() {
+    return {
+      /**
+       * List of elemet groups.
+       * Each item contains name, color, title, symbol, tagline and ref.
+       *
+       * @type {Array<Object>}
+       */
+      groups: {
+        type: Array,
+        notify: true
+      },
+      /**
+       * Name of the package to download data for.
+       * When data download complete the `packageData` property is set.
+       */
+      packageName: String,
+      /**
+       * List of elements in package.
+       */
+      packageData: {
+        type: Object,
+        notify: true
+      },
+      /**
+       * Name of the element to download data for.
+       * When data download complete the `elementData` property is set.
+       */
+      elementName: String,
+      /**
+       * Data for an element.
+       */
+      elementData: {
+        type: Object,
+        notify: true
+      },
+      /**
+       * Flat list of all elements.
+       */
+      allElement: {
+        type: Array,
+        notify: true
+      },
+      // Name of the element bundle. It may contains many elements.
+      bundle: String,
+      // Bower data from the bundle.
+      bundleData: {
+        type: Array,
+        notify: true
+      },
+    };
+  }
+
+  static get observers() {
+    return [
+      '_packageNameChanged(packageName)',
+      '_elementChanged(elementName)',
+      '_bundleChanged(bundle)'
+    ];
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    DataObserver.attachListener(this);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    DataObserver.detachListener(this);
+  }
+
+  ready() {
+    super.ready();
+    if (!this.groups || !this.groups.length) {
+      this.getPackageData();
+    }
+  }
+
+  fire(name, detail) {
+    var event = new CustomEvent(name, {
+      detail: detail,
+      bubbles: true,
+      composed: true
+    });
+    this.dispatchEvent(event);
+  }
+
+  getPackageData() {
+    return fetch('/data/groups.json')
+    .then((response) => {
+      if (!response.ok) {
+        let error = new Error('Can\'t download groups definitions.');
+        this.fire('general-error', {
+          message: error.message
+        });
+        throw error;
+      }
+      return response.json();
+    })
+    .then((json) => {
+      DataObserver.groups = json;
+      this.set('groups', json);
+    })
+    .catch((cause) => {
+      let error = new Error('Can\'t set components definitions.');
+      this.fire('general-error', {
+        message: error.message,
+        genericMessage: cause.message
+      });
+      throw cause;
+    });
+  }
+
+  _packageNameChanged(packageName) {
+    if (!packageName) {
+      return;
+    }
+    if (DataObserver.packages[packageName]) {
+      this.set('packageData', DataObserver.packages[packageName]);
+      return;
+    }
+    return fetch('/data/' + packageName + '.json')
+    .then((response) => {
+      if (!response.ok) {
+        let error = new Error('Can\'t download components definitions: ' + packageName);
+        this.fire('general-error', {
+          message: error.message
+        });
+        throw error;
+      }
+      return response.json();
+    })
+    .then((json) => {
+      DataObserver.addPackage(packageName, json);
+    })
+    .catch((cause) => {
+      let error = new Error('Can\'t set components definitions: ' + packageName);
+      this.fire('general-error', {
+        message: error.message,
+        genericMessage: cause.message
+      });
+      throw cause;
+    });
+  }
+
+  _elementChanged(elementName) {
+    if (!elementName) {
+      return;
+    }
+    if (DataObserver.elements[elementName]) {
+      this.set('elementData', DataObserver.elements[elementName]);
+      this.set('allElements', DataObserver.allElements);
+      return;
+    }
+    return fetch('/data/' + elementName + '.json')
+    .then((response) => {
+      if (!response.ok) {
+        let error = new Error('Can\'t download element definition.');
+        this.fire('general-error', {
+          message: error.message
+        });
+        throw error;
+      }
+      return response.json();
+    })
+    .then((json) => {
+      DataObserver.addElements(elementName, json);
+    })
+    .catch((cause) => {
+      let error = new Error('Can\'t set element definition.');
+      this.fire('general-error', {
+        message: error.message,
+        genericMessage: cause.message
+      });
+      throw cause;
+    });
+  }
+
+  _bundleChanged(bundle) {
+    if (!bundle) {
+      return;
+    }
+    if (DataObserver.bundles[bundle]) {
+      this.set('bundleData', DataObserver.bundles[bundle]);
+      return;
+    }
+    return fetch('/data/' + bundle + '/bundle.json')
+    .then((response) => {
+      if (!response.ok) {
+        let error = new Error('Can\'t download bundle definition.');
+        this.fire('general-error', {
+          message: error.message
+        });
+        throw error;
+      }
+      return response.json();
+    })
+    .then((json) => {
+      DataObserver.addBundle(bundle, json);
+    })
+    .catch((cause) => {
+      let error = new Error('Can\'t set bundle definition.');
+      this.fire('general-error', {
+        message: error.message,
+        genericMessage: cause.message
+      });
+      throw cause;
+    });
+  }
+}
+
+window.customElements.define(CatalogData.is, CatalogData);
+})();
+</script>

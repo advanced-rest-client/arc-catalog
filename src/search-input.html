@@ -1,0 +1,49 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="catalog-icons.html">
+<dom-module id="search-input">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    .container {
+      /*background-color: #fff;
+      padding: 20px;*/
+    }
+    </style>
+    <div class="container">
+      <paper-input label="Search components" no-label-float type="search">
+        <paper-icon-button slot="suffix" icon="catalog:search"></paper-icon-button>
+      </paper-input>
+    </div>
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class SearchInput extends Polymer.Element {
+      static get is() {
+        return 'search-input';
+      }
+    }
+
+    window.customElements.define(SearchInput.is, SearchInput);
+  </script>
+</dom-module>

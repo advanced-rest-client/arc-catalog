@@ -1,0 +1,77 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<!-- shared styles for docs views -->
+<dom-module id="element-docs-styles">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    h3 {
+      @apply --paper-font-headline;
+    }
+
+    h4 {
+      @apply --paper-font-title;
+      margin: 0;
+    }
+
+    .property {
+      margin-bottom: 20px;
+    }
+
+    .title {
+      @apply --layout-horizontal;
+      @apply --layout-end;
+      margin: 1.03em 0;
+    }
+
+    .inherited {
+      font-style: italic;
+      @apply --paper-font-body1;
+    }
+
+    .deep-link {
+      color: currentcolor;
+      text-decoration: none;
+    }
+
+    .protected-actions {
+      @apply --layout-horizontal;
+      max-width: var(--text-block-max-width, 700px);
+    }
+
+    .protected-toggle {
+      @apply --layout-flex;
+      background-color: var(--paper-green-500);
+      color: white;
+    }
+
+    :host(.with-protected) [protected] {
+      display: block;
+    }
+
+    *[protected] {
+      display: none;
+    }
+
+    .description {
+      max-width: var(--text-block-max-width, 700px);
+    }
+
+    .meta-trait {
+      color: rgb(211, 44, 58);
+    }
+    </style>
+  </template>
+</dom-module>

@@ -1,0 +1,270 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../search-input.html">
+<link rel="import" href="../catalog-icons.html">
+<link rel="import" href="catalog-data.html">
+<link rel="import" href="package-navigation.html">
+<link rel="import" href="element-navigation.html">
+<dom-module id="arc-catalog-app">
+  <template>
+    <style>
+    :host {
+      --app-primary-color: #478fcc;
+      --app-secondary-color: black;
+
+      display: block;
+      background-color: #f6f7f8;
+    }
+
+    app-header {
+      color: #fff;
+      background-color: var(--app-primary-color);
+    }
+
+    app-header paper-icon-button {
+      --paper-icon-button-ink-color: white;
+    }
+
+    app-drawer-layout:not([narrow]) [drawer-toggle] {
+      display: none;
+    }
+
+    .drawer-list {
+      margin: 0 20px;
+    }
+
+    .drawer-list a {
+      display: block;
+      padding: 0 16px;
+      text-decoration: none;
+      color: var(--app-secondary-color);
+      line-height: 40px;
+    }
+
+    .drawer-list a.iron-selected {
+      color: black;
+      font-weight: bold;
+    }
+
+    search-input {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      --paper-input-container-color: #EEEEEE;
+      --paper-input-container-focus-color: #fff;
+      --paper-input-container-input-color: #fff;
+    }
+
+    [main-title] {
+      @apply --paper-font-title;
+      font-weight: 400;
+    }
+
+    .arc-icon {
+      margin-right: 8px;
+    }
+
+    .drawer-content {
+      margin-top: 128px;
+      height: calc(100% - 128px);
+      overflow: auto;
+    }
+
+    app-drawer {
+      --app-drawer-content-container: {
+        background-color: #FAFAFA;
+      }
+    }
+
+    a {
+      color: currentcolor;
+      text-decoration: none;
+    }
+    </style>
+    <app-location route="{{route}}"></app-location>
+    <app-route route="{{route}}" pattern="/:package" data="{{routeData}}" tail="{{subroute}}"></app-route>
+    <app-route route="{{subroute}}" pattern="/:element/:file" data="{{subrouteData}}"></app-route>
+
+    <app-header-layout fullbleed has-scrolling-region>
+      <app-header fixed effects="waterfall" slot="header">
+        <app-toolbar>
+          <template is="dom-if" if="[[!_computeNarrowDrawer(routeData.*)]]">
+            <paper-icon-button icon="catalog:menu" on-tap="_toggleDrawer"></paper-icon-button>
+          </template>
+
+            <iron-icon icon="catalog:arc-icon" class="arc-icon"></iron-icon>
+            <a href="/">
+              <div main-title>ARC elements catalog</div>
+            </a>
+        </app-toolbar>
+        <app-toolbar sticky>
+          <search-input></search-input>
+        </app-toolbar>
+      </app-header>
+
+      <app-drawer-layout id="drawerLayout" force-narrow="[[_computeNarrowDrawer(routeData.*)]]">
+        <app-drawer slot="drawer">
+          <div class="drawer-content">
+            <iron-pages selected="[[page]]" attr-for-selected="name" role="nav">
+              <package-navigation name="package" package="[[routeData.package]]"></package-navigation>
+              <element-navigation name="element" package="[[routeData.package]]" element="[[subrouteData.element]]" file="[[subrouteData.file]]"></element-navigation>
+            </iron-pages>
+          </div>
+        </app-drawer>
+        <div>
+          <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="404" role="main">
+            <index-page name="index" packages="[[data.groups]]"></index-page>
+            <package-list name="package" package="[[routeData.package]]"></package-list>
+            <element-details name="element" package="[[routeData.package]]" element="[[subrouteData.element]]" file="[[subrouteData.file]]"></element-details>
+            <page-404 name="404"></page-404>
+          </iron-pages>
+        </div>
+      </app-drawer-layout>
+    </app-header-layout>
+    <catalog-data groups="{{data.groups}}"></catalog-data>
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class ArcCatalogApp extends Polymer.Element {
+      static get is() {
+        return 'arc-catalog-app';
+      }
+      static get properties() {
+        return {
+          route: {
+            type: Object
+          },
+          routeData: {
+            type: Object
+          },
+          data: {
+            type: Object,
+            value: function() {
+              return {
+                groups: []
+              };
+            }
+          },
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged'
+          },
+          // Currently selected element
+          element: String
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routeChanged(routeData.*, subrouteData.*)'
+        ];
+      }
+
+      _routeChanged(routeRecord, subrouteRecord) {
+        var route = routeRecord.base;
+        if (!route || !route.package) {
+          this.page = 'index';
+          return;
+        }
+        var sub = subrouteRecord.base;
+        switch (route.package) {
+          default:
+            if (!sub || !sub.element || !this.subroute.path) {
+              this.page = 'package';
+              return;
+            }
+            if (sub.element) {
+              this.page = 'element';
+              return;
+            }
+        }
+        this.page = '404';
+      }
+
+      _pageChanged(page) {
+        var resolvedPageUrl = this.resolveUrl('arc-' + page + '.html');
+        Polymer.importHref(resolvedPageUrl, null, this._showPage404.bind(this), true);
+        // this._computeElement();
+      }
+
+      _showPage404() {
+        this.page = '404';
+      }
+
+      _computeNarrowDrawer(record) {
+        if (!record) {
+          return true;
+        }
+        var route = record.base || {};
+        if (!route.package || route.package === 'index') {
+          return true;
+        }
+
+        return false;
+      }
+
+      // _routeChanged(data) {
+      //   if (!data || !data.path || data.path === '/') {
+      //     this.page = 'index';
+      //   }
+      // }
+
+      _computeElement() {
+        var route = this.routeData;
+        if (!route) {
+          if (this.elmement) {
+            this.elmement = undefined;
+          }
+          return;
+        }
+        switch (route.package) {
+          case 'element':
+            let elm = this.subroute.path.substr(1);
+            this.elmement = elm;
+            break;
+        }
+      }
+
+      _toggleDrawer() {
+        var layout = this.$.drawerLayout;
+        if (layout.forceNarrow || !layout.narrow) {
+          layout.forceNarrow = !layout.forceNarrow;
+        } else {
+          layout.drawer.toggle();
+        }
+      }
+    }
+
+    window.customElements.define(ArcCatalogApp.is, ArcCatalogApp);
+  </script>
+</dom-module>

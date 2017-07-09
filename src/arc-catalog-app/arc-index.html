@@ -1,0 +1,84 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="package-tile.html">
+
+<dom-module id="index-page">
+  <template>
+    <style include="shared-styles">
+    :host {
+      display: block;
+      padding: 10px;
+    }
+
+    .packages {
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .packages-list {
+      @apply(--layout-horizontal);
+      @apply(--layout-wrap);
+    }
+
+    package-tile {
+      width: 210px;
+      margin: 24px;
+    }
+    </style>
+
+    <section class="card packages">
+      <div class="packages-list">
+        <template is="dom-repeat" items="[[packages]]">
+          <a href$="[[_packageLink(item.ref)]]" class="package">
+            <package-tile package="[[item]]"></package-tile>
+          </a>
+        </template>
+      </div>
+    </section>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class IndexPage extends Polymer.Element {
+      static get is() {
+        return 'index-page';
+      }
+
+      static get properties() {
+        return {
+          /**
+           * List of main packages in the catalog.
+           *
+           * @type {Array}
+           */
+          packages: Array
+        };
+      }
+
+      _packageLink(ref) {
+        return '' + ref;
+      }
+    }
+
+    window.customElements.define(IndexPage.is, IndexPage);
+  </script>
+</dom-module>

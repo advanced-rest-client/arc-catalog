@@ -1,0 +1,163 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="catalog-data.html">
+<link rel="import" href="catalog-icons.html">
+<dom-module id="element-navigation">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    a {
+      color: currentcolor;
+      text-decoration: none;
+    }
+
+    a.iron-selected paper-item {
+      font-weight: var(--paper-item-selected-weight, bold);
+    }
+
+    h4 {
+      @apply --paper-font-subhead;
+      font-weight: 500;
+    }
+
+    h4,
+    .bower-command,
+    .license {
+      margin-left: 12px;
+      margin-right: 12px;
+    }
+
+    .bower-command {
+      display: block;
+      background-color: #FBE9E7;
+      padding: 8px 4px;
+      @apply --paper-font-code1;
+    }
+
+    .license {
+      @apply --paper-font-body1;
+    }
+
+    .back {
+      @apply --paper-font-body1;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+    </style>
+    <template is="dom-if" if="[[loading]]">
+      <paper-spinner active></paper-spinner>
+    </template>
+
+    <template is="dom-if" if="[[!loading]]">
+      <div class="back">
+        <a href="/[[package]]">
+          <paper-icon-button icon="catalog:arrow-back"></paper-icon-button>
+          [[package]]
+        </a>
+      </div>
+      <template is="dom-if" if="[[bundleData.license]]">
+        <h4>License</h4>
+        <p class="license">Licensed under: [[bundleData.license]]</p>
+      </template>
+
+      <h4>Install</h4>
+      <code class="bower-command" title="Install command" on-tap="_selectAllInfoDownload">bower install --save advanced-rest-client/[[element]]</code>
+
+      <h4>Elements</h4>
+      <iron-selector selected="{{file}}" attr-for-selected="data-file">
+        <template is="dom-repeat" items="[[bundleData.elements]]">
+          <a href$="/[[package]]/[[element]]/[[item]]" tabindex="-1" data-file$="[[item]]">
+            <paper-item data-name$="[[item]]">[[item]]</paper-item>
+          </a>
+        </template>
+      </iron-selector>
+    </template>
+    <catalog-data bundle="[[element]]" bundle-data="{{bundleData}}"></catalog-data>
+    <paper-toast></paper-toast>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class ElementNavigation extends Polymer.Element {
+      static get is() {
+        return 'element-navigation';
+      }
+
+      static get properties() {
+        return {
+          // Currently selected package
+          package: String,
+          // Currently selected element
+          element: String,
+          // Currently selected file from the element bundle
+          file: String,
+          // Package info.
+          bundleData: {
+            type: Array,
+            observer: '_infoChanged'
+          },
+          // True if data are being loaded
+          loading: {
+            type: Boolean,
+            value: true
+          }
+        };
+      }
+
+      _infoChanged(value) {
+        if (!value || !value.name) {
+          this.loading = true;
+        } else {
+          this.loading = false;
+        }
+      }
+
+      _selectAllInfoDownload(e) {
+        var t;
+        if (document.body.createTextRange) {
+          t = document.body.createTextRange();
+          t.moveToElementText(e.currentTarget);
+          t.select();
+        } else if (window.getSelection) {
+          t = document.createRange();
+          t.selectNodeContents(e.currentTarget);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(t);
+        }
+        document.execCommand('copy');
+        var toast = this.shadowRoot.querySelector('paper-toast');
+        toast.text = 'Commaned copied to clipboard';
+        toast.opened = true;
+      }
+    }
+
+    window.customElements.define(ElementNavigation.is, ElementNavigation);
+  </script>
+</dom-module>

@@ -1,0 +1,114 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="shared-styles.html">
+<dom-module id="elements-list">
+  <template>
+    <style include="shared-styles">
+    :host {
+      display: block;
+      --paper-item-min-height: 60px;
+    }
+
+    .element-description {
+      @apply --paper-font-body1;
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    .element-title {
+      @apply --paper-font-title;
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    h2 {
+      @apply --paper-font-subhead;
+      padding-left: 12px;
+    }
+    </style>
+    <h2>[[size]] [[_titleLabel]]</h2>
+    <section class="card">
+      <template is="dom-repeat" items="[[elements]]">
+        <a href$="[[_packageLink(item.ref, package)]]" tabindex="-1">
+          <paper-item raised>
+            <paper-item-body two-line>
+              <div class="element-title">[[item.name]]</div>
+              <div secondary class="element-description">[[item.tagline]]</div>
+            </paper-item-body>
+          </paper-item>
+        </a>
+      </template>
+    </section>
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class ElementsList extends Polymer.Element {
+      static get is() {
+        return 'elements-list';
+      }
+
+      static get properties() {
+        return {
+          /**
+           * List of element to render.
+           */
+          elements: Array,
+          // Size of the elements array. Computed value.
+          size: {
+            type: Number,
+            value: 0,
+            computed: '_computeSize(elements)'
+          },
+          _titleLabel: {
+            type: String,
+            computed: '_computeTitleLabel(size)'
+          },
+          /**
+           * Package name that the element belongs to.
+           */
+          package: String
+        };
+      }
+
+      _packageLink(ref, packageName) {
+        return packageName + '/' + ref;
+      }
+
+      _computeSize(elements) {
+        if (!elements || !(elements instanceof Array)) {
+          return 0;
+        }
+        return elements.length;
+      }
+
+      _computeTitleLabel(size) {
+        var label = 'element';
+        return size === 1 ? label : label + 's';
+      }
+    }
+
+    window.customElements.define(ElementsList.is, ElementsList);
+  </script>
+</dom-module>

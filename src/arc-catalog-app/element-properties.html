@@ -1,0 +1,144 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../../bower_components/marked-element/marked-element.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="markdown-styles.html">
+<link rel="import" href="element-docs.html">
+<link rel="import" href="element-docs-styles.html">
+<dom-module id="element-properties">
+  <template>
+    <style include="element-docs-styles"></style>
+    <style include="markdown-styles">
+    .type {
+      color: rgba(0, 0, 0, 0.54);
+      @apply --paper-font-body2;
+    }
+
+    .property-meta {
+      margin-left: 12px;
+      @apply --paper-font-body2;
+      color: rgba(0, 0, 0, 0.74);
+    }
+
+    .meta-name {
+      margin-right: 8px;
+      @apply --paper-font-body1;
+      color: rgba(0, 0, 0, 0.54);
+    }
+    </style>
+    <h3>Properties</h3>
+    <template is="dom-repeat" items="[[model]]">
+      <div class="property" protected$="[[!item.public]]">
+        <div class="title">
+          <h4>
+            <a href$="#[[item.id]]" id$="[[item.id]]" class="deep-link">[[item.name]]</a>
+          </h4>
+          <template is="dom-if" if="[[item.type]]">
+            <span class="type">: [[item.type]]</type>
+          </template>
+        </div>
+
+        <template is="dom-if" if="[[item.inheritedFrom]]">
+          <p class="inherited">Inherited from <span>[[item.inheritedFrom]]</span></p>
+        </template>
+        <template is="dom-if" if="[[item.description]]">
+          <marked-element class="description" markdown="[[item.description]]">
+            <div slot="markdown-html"></div>
+          </marked-element>
+        </template>
+        <template is="dom-if" if="[[item.default]]">
+          <p class="property-meta">
+            <span class="meta-name">Default value:</span>[[item.default]]
+          </p>
+        </template>
+        <template is="dom-if" if="[[item.readOnly]]">
+          <p class="property-meta">
+            <span class="meta-trait">Read only</span>
+          </p>
+        </template>
+        <template is="dom-if" if="[[item.notify]]">
+          <p class="property-meta">
+            <span class="meta-trait">Notifies changes</span>
+          </p>
+        </template>
+        <template is="dom-if" if="[[item.reflectToAttribute]]">
+          <p class="property-meta">
+            <span class="meta-trait">Reflected to attribute</span>
+          </p>
+        </template>
+      </div>
+    </template>
+    <template is="dom-if" if="[[hasProtected]]">
+      <div class="protected-actions">
+        <paper-button class="protected-toggle" on-tap="toggleProtected">[[_computeProtectedToggleLabel(withProtected)]] protected properties</paper-button>
+      </div>
+    </template>
+  </template>
+  <script>
+  /* global DocsMixin */
+  /**
+   * @customElement
+   * @polymer
+   */
+  class ElementProperties extends DocsMixin(Polymer.Element) {
+    static get is() {
+      return 'element-properties';
+    }
+
+    static get observers() {
+      return [
+        '_computeModel(data)'
+      ];
+    }
+
+    _computeModel(data) {
+      if (!data) {
+        this._setHasProtected(false);
+        this._setModel(undefined);
+        return;
+      }
+      data = Array.from(data);
+      data.sort(this._sortFunction);
+
+      data = data.map(item => {
+        item.id = this._computeDeepLink('property', item.name);
+        return item;
+      });
+
+      var publicMethods = data.filter(i => i.privacy === 'public');
+      var protectedMethods = data.filter(i => i.privacy !== 'public');
+      publicMethods = publicMethods.map(i => {
+        i.public = true;
+        return i;
+      });
+      protectedMethods = protectedMethods.map(i => {
+        i.public = false;
+        return i;
+      });
+      this._setHasProtected(protectedMethods.length > 0);
+      this._setModel(publicMethods.concat(protectedMethods));
+    }
+
+    _computeNamePropertiesHidden(item) {
+      return !(item.type && item.default);
+    }
+  }
+
+  window.customElements.define(ElementProperties.is, ElementProperties);
+  </script>
+</dom-module>

@@ -1,0 +1,187 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/marked-element/marked-element.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="markdown-styles.html">
+<link rel="import" href="catalog-data.html">
+<link rel="import" href="element-properties.html">
+<link rel="import" href="element-methods.html">
+<link rel="import" href="element-events.html">
+<dom-module id="element-details">
+  <template>
+    <style include="markdown-styles">
+     :host {
+      display: block;
+      padding: 0 24px;
+      --text-block-max-width: 700px;
+    }
+
+    h1 {
+      @apply --paper-font-display2;
+      margin-bottom: 0;
+      margin-right: 12px;
+    }
+
+    h2 {
+      @apply --paper-font-display1;
+      margin-right: 12px;
+    }
+
+    .element-description {
+      max-width: var(--text-block-max-width);
+    }
+
+    .title {
+      @apply --layout-horizontal;
+      @apply --layout-end;
+      margin-bottom: 20px;
+    }
+
+    .version {
+      @apply --paper-font-headline;
+    }
+
+    .tagline {
+      @apply --paper-font-headline;
+      max-width: var(--text-block-max-width);
+      color: rgba(0, 0, 0, 0.54);
+      margin-bottom: 1.33em;
+    }
+    element-properties,
+    element-methods,
+    element-events,
+    element-behaviors {
+      margin-bottom: 40px;
+    }
+    </style>
+    <template is="dom-if" if="{{loading}}">
+      <paper-spinner active></paper-spinner>
+    </template>
+    <div class="title">
+      <h1>[[package]]</h1>
+      <span hidden$="[[!elementMeta]]" class="version">v[[elementMeta.version]]</span>
+    </div>
+    <template is="dom-if" if="[[elementMeta.tagline]]">
+      <p class="tagline">[[elementMeta.tagline]]</p>
+    </template>
+
+    <h2>Element: <span class="element-name">[[_elementData.name]]</span></h2>
+
+    <template is="dom-if" if="[[_elementData.description]]">
+      <marked-element class="element-description" markdown="[[_elementData.description]]">
+        <div slot="markdown-html"></div>
+      </marked-element>
+    </template>
+    <template is="dom-if" if="[[_hasValue(_elementData.properties)]]">
+      <element-properties data="[[_elementData.properties]]"></element-properties>
+    </template>
+    <template is="dom-if" if="[[_hasValue(_elementData.methods)]]">
+      <element-methods data="[[_elementData.methods]]"></element-methods>
+    </template>
+    <template is="dom-if" if="[[_hasValue(_elementData.events)]]">
+      <element-events data="[[_elementData.events]]"></element-events>
+    </template>
+    <template is="dom-if" if="[[_hasValue(_elementData.behaviors)]]">
+      <element-behaviors data="[[_elementData.behaviors]]"></element-behaviors>
+    </template>
+    demos
+    <catalog-data package-name="[[package]]" package-data="{{_packageData}}" element-name="[[_computeElement(element, file)]]" element-data="{{_elementData}}"></catalog-data>
+  </template>
+  <script>
+  /**
+   * @customElement
+   * @polymer
+   */
+  class ArcElement extends Polymer.Element {
+    static get is() {
+      return 'element-details';
+    }
+
+    static get properties() {
+      return {
+        /**
+         * Package name to display.
+         */
+        package: String,
+        // Element name to display
+        element: String,
+        // File name from the element to display
+        file: String,
+        // Package info.
+        _packageData: {
+          type: Object,
+        },
+        // Element info.
+        _elementData: {
+          type: Object,
+          observer: '_dataChanged'
+        },
+        // True if data are being loaded
+        loading: {
+          type: Boolean,
+          value: true
+        },
+        // Element's metadata found in package definition
+        elementMeta: {
+          type: String,
+          computed: '_computeElementMeta(_packageData, element)'
+        }
+      };
+    }
+
+    _computeElement(element, file) {
+      return element + '/' + file;
+    }
+
+    _dataChanged(data) {
+      if (data) {
+        this.loading = false;
+      } else {
+        this.loading = true;
+        return;
+      }
+    }
+
+    _hasValue(obj) {
+      if (obj === null || obj === undefined) {
+        return false;
+      }
+      if (obj instanceof Array) {
+        return obj.length > 0;
+      }
+      var type = typeof obj;
+      if (type === 'number' && obj === 0) {
+        return false;
+      }
+      if (type === 'boolean') {
+        return true;
+      }
+      return !!obj;
+    }
+
+    _computeElementMeta(_packageData, name) {
+      if (!_packageData || !_packageData.elements || !name) {
+        return;
+      }
+      return _packageData.elements.find((element) => element.name === name);
+    }
+  }
+
+  window.customElements.define(ArcElement.is, ArcElement);
+  </script>
+</dom-module>

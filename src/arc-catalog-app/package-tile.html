@@ -1,0 +1,234 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="one-color.html">
+<dom-module id="package-tile">
+  <template>
+    <style>
+    :host {
+      --material-curve-320: all 320ms cubic-bezier(0.55, 0, 0.1, 1);
+      --material-curve: cubic-bezier(0.55, 0, 0.1, 1);
+      --font-color: rgba(0, 0, 0, 0.6);
+      --background-color: rgba(255, 255, 255, 0.8);
+
+      display: block;
+      transition: var(--material-curve-320);
+      transform: translate(0, 60px);
+      opacity: 0;
+    }
+
+    :host(.active) {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+
+    .content {
+      display: block;
+      position: relative;
+      border-radius: 2px;
+      box-sizing: border-box;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 200ms;
+      transition-timing-function: var(--material-curve);
+      padding: 16px;
+      color: var(--font-color);
+      background-color: var(--background-color);
+    }
+
+    :host(:hover) .content {
+      @apply(--shadow-elevation-4dp);
+    }
+
+    h2 {
+      @apply(--paper-font-display2);
+      margin: 20px 0;
+      transform: translate(-50px, 0);
+      opacity: 0;
+      transition: all 500ms 320ms;
+      transition-timing-function: var(--material-curve-320);
+    }
+
+    :host(.active) h2 {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+
+    h3 {
+      @apply(--paper-font-title);
+      white-space: pre-wrap;
+      transform: translate(-50px, 0);
+      opacity: 0;
+      transition: all 600ms 320ms;
+      transition-timing-function: var(--material-curve-320);
+    }
+
+    :host(.active) h3 {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+
+    hr {
+      border: 0;
+      background: #fff;
+      width: 0;
+      height: 1px;
+      opacity: 0.2;
+      margin: 0;
+      transition: width 400ms 320ms;
+      transition-timing-function: var(--material-curve-320);
+    }
+
+    :host(.active) hr {
+      width: 100%;
+      background: #606060;
+      opacity: 1;
+    }
+
+    .version {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 13px;
+      transition: all 400ms 320ms;
+      transition-timing-function: var(--material-curve-320);
+      transform: translate(50px, 0);
+      opacity: 0;
+    }
+
+    :host(.active) .version {
+      transform: translate(0, 0);
+      opacity: 0.8;
+    }
+
+    .title {
+      margin: 0 0 15px;
+      height: 60px;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 28px;
+    }
+
+    .title[extended] {
+      display: block;
+    }
+
+    .tagline {
+      transition: all 700ms 320ms;
+      transition-timing-function: var(--material-curve-320);
+      transform: translate(-50px, 0);
+      opacity: 0;
+      height: 40px;
+      @apply(--paper-font-body2);
+    }
+
+     :host(.active) .tagline {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    </style>
+    <section class="content">
+      <span class="version">[[package.version]]</span>
+      <h2 class="symbol">[[package.symbol]]</h2>
+      <h3 class="title" extended$="[[_extendedTitle(package.title)]]">[[package.title]]</h3>
+      <hr themed-reverse>
+      <p class="tagline">[[package.tagline]]</p>
+    </section>
+  </template>
+  <script>
+  /* global one */
+  /**
+   * @customElement
+   * @polymer
+   */
+  class PackageTile extends Polymer.Element {
+    static get is() {
+      return 'package-tile';
+    }
+
+    static get properties() {
+      return {
+        /**
+         * Package information to display.
+         *
+         * @type {Object}
+         */
+        package: {
+          type: Object,
+          observer: '_packageChanged'
+        },
+        /**
+         * Computed value for the text color depending on background color
+         *
+         * @type {String}
+         */
+        textColor: {
+          type: String,
+          computed: '_computeTextColor(package.color)',
+          observer: '_textColorChanged'
+        }
+      };
+    }
+
+    static get observers() {
+      return [
+        '_colorChanged(package.color)'
+      ];
+    }
+
+    _extendedTitle(title) {
+      if (title && title.length > 20) {
+        return true;
+      }
+    }
+
+    _computeTextColor(color) {
+      if (color) {
+        var lightness = one.color(color).lightness();
+        return (lightness > 0.5) ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)';
+      } else {
+        return null;
+      }
+    }
+
+    _textColorChanged(color) {
+      if (color) {
+        this.updateStyles({
+          '--font-color': color
+        });
+      }
+    }
+
+    _colorChanged(color) {
+      if (color) {
+        this.updateStyles({
+          '--background-color': color
+        });
+      }
+    }
+
+    _packageChanged(data) {
+      if (data) {
+        this.classList.add('active');
+      } else {
+        this.classList.remove('active');
+      }
+    }
+  }
+
+  window.customElements.define(PackageTile.is, PackageTile);
+  </script>
+</dom-module>

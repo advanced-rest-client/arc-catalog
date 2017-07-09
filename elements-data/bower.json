@@ -1,0 +1,13 @@
+{
+  "name": "arc-catalog-data",
+  "version": "0.1.0",
+  "description": "Data for included components",
+  "private": true,
+  "dependencies": {
+    "chrome-elements": "advanced-rest-client/chrome-elements#^1.0.0",
+    "logic-elements": "advanced-rest-client/logic-elements#^1.0.0",
+    "raml-elements": "advanced-rest-client/raml-elements#^1.0.0",
+    "transport-elements": "advanced-rest-client/transport-elements#^1.0.0",
+    "ui-elements": "advanced-rest-client/ui-elements#^1.0.0"
+  }
+}
