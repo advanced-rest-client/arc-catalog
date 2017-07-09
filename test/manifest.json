@@ -1,7 +1,0 @@
-{
-  "name": "arc-catalog",
-  "short_name": "arc-catalog",
-  "description": "Catalog of elements for Advanced REST Client and the API console.",
-  "start_url": "/",
-  "display": "standalone"
-}
