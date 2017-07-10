@@ -25,6 +25,7 @@ the License.
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="/bower_components/polymer/lib/utils/render-status.html">
 <link rel="import" href="../search-input.html">
 <link rel="import" href="../catalog-icons.html">
 <link rel="import" href="catalog-data.html">
@@ -109,6 +110,7 @@ the License.
     <app-location route="{{route}}"></app-location>
     <app-route route="{{route}}" pattern="/:package" data="{{routeData}}" tail="{{subroute}}"></app-route>
     <app-route route="{{subroute}}" pattern="/:element/:file" data="{{subrouteData}}"></app-route>
+    <app-route route="{{subroute}}" pattern="/:query" data="{{searchParams}}"></app-route>
 
     <app-header-layout fullbleed id="layout">
       <app-header condenses reveals effects="waterfall" slot="header">
@@ -123,7 +125,7 @@ the License.
             </a>
         </app-toolbar>
         <app-toolbar sticky>
-          <search-input></search-input>
+          <search-input on-input="_searchInput"></search-input>
         </app-toolbar>
       </app-header>
 
@@ -141,6 +143,7 @@ the License.
             <index-page name="index" packages="[[data.groups]]"></index-page>
             <package-list name="package" package="[[routeData.package]]"></package-list>
             <element-details name="element" package="[[routeData.package]]" element="[[subrouteData.element]]" file="[[subrouteData.file]]"></element-details>
+            <arc-search name="search" query="[[searchParams.query]]"></arc-search>
             <page-404 name="404"></page-404>
           </iron-pages>
         </div>
@@ -182,7 +185,9 @@ the License.
           // Currently selected element
           element: String,
           // A handler for the scroll event
-          _scrollHandler: Object
+          _scrollHandler: Object,
+          // A handler for the navigate event
+          _navigateHandler: Object
         };
       }
 
@@ -197,12 +202,19 @@ the License.
         if (!this._scrollHandler) {
           this._scrollHandler = this._onScroll.bind(this);
         }
-        window.addEventListener('scroll', this._scrollHandler);
+        if (!this._navigateHandler) {
+          this._navigateHandler = this._onNavigate.bind(this);
+        }
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          window.addEventListener('scroll', this._scrollHandler);
+          this.addEventListener('navigate', this._navigateHandler);
+        });
       }
 
       disconnectedCallback() {
         super.disconnectedCallback();
         window.removeEventListener('scroll', this._scrollHandler);
+        this.removeEventListener('navigate', this._navigateHandler);
       }
 
       _onScroll() {
@@ -231,6 +243,10 @@ the License.
         }
         var sub = subrouteRecord.base;
         switch (route.package) {
+          case 'search':
+            this.page = 'search';
+            window.scroll(0, 0);
+            return;
           default:
             if (!sub || !sub.element || !this.subroute.path) {
               this.page = 'package';
@@ -263,30 +279,7 @@ the License.
         if (!route.package || route.package === 'index') {
           return true;
         }
-
         return false;
-      }
-
-      // _routeChanged(data) {
-      //   if (!data || !data.path || data.path === '/') {
-      //     this.page = 'index';
-      //   }
-      // }
-
-      _computeElement() {
-        var route = this.routeData;
-        if (!route) {
-          if (this.elmement) {
-            this.elmement = undefined;
-          }
-          return;
-        }
-        switch (route.package) {
-          case 'element':
-            let elm = this.subroute.path.substr(1);
-            this.elmement = elm;
-            break;
-        }
       }
 
       _toggleDrawer() {
@@ -296,6 +289,28 @@ the License.
         } else {
           layout.drawer.toggle();
         }
+      }
+
+      _searchInput() {
+        if (this._searchModuleInitializing || this._searchModule) {
+          return;
+        }
+        this._searchModuleInitializing = true;
+        var resolvedPageUrl = this.resolveUrl('search-module.html');
+        Polymer.importHref(resolvedPageUrl, () => {
+          let mod = document.createElement('search-module');
+          this.shadowRoot.appendChild(mod);
+          this._searchModule = mod;
+          this._searchModuleInitializing = false;
+        }, () => {
+          console.error('Cannot load search module :(');
+          this._searchModuleInitializing = false;
+        }, true);
+      }
+
+      _onNavigate(e) {
+        var path = e.detail.path;
+        this.set('route.path', path || '/');
       }
     }
 

@@ -1,0 +1,153 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<dom-module id="search-module">
+  <template>
+    <style>
+     :host {
+      display: none;
+    }
+    </style>
+    <catalog-data groups="{{groups}}"></catalog-data>
+    <template is="dom-repeat" items="[[groups]]">
+      <catalog-data package-name="[[item.name]]" on-package-data-changed="_packageDataReady" on-package-error="_packageDataError"></catalog-data>
+    </template>
+  </template>
+  <script>
+  /**
+   * @customElement
+   * @polymer
+   */
+  class SearchModule extends Polymer.Element {
+    static get is() {
+      return 'search-module';
+    }
+
+    static get properties() {
+      return {
+        // Groups of elements
+        groups: Object,
+        // Number of packages left to download.
+        _packagesLeft: Number,
+        // element list data.
+        _elementsData: Object,
+        // Event handler for `element-search` event.
+        _queryHandler: Object,
+        // Flag determines if all data are downloaded already
+        _dataReady: {
+          type: Boolean,
+          value: false
+        },
+        /**
+         * List of query events that has been handle by the element but
+         * before data were ready.
+         */
+        __pendingEvents: Array
+      };
+    }
+
+    static get observers() {
+      return [
+        '_computeDownloadsLeft(groups)'
+      ];
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      if (!this._queryHandler) {
+        this._queryHandler = this._onQuery.bind(this);
+      }
+      window.addEventListener('element-search', this._queryHandler);
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback();
+      window.removeEventListener('element-search', this._queryHandler);
+    }
+
+    _computeDownloadsLeft(groups) {
+      this._packagesLeft = groups.length;
+    }
+
+    _packageDataReady(e) {
+      var value = e.detail.value;
+      var name = value.name;
+      var elements = value.elements;
+      if (!this._elementsData) {
+        this._elementsData = {};
+      }
+      this._elementsData[name] = elements;
+      this._packagesLeft--;
+      if (this._packagesLeft === 0) {
+        this._onDataReady();
+      }
+    }
+
+    _onDataReady() {
+      this._dataReady = true;
+      if (this.__pendingEvents) {
+        this.__pendingEvents.forEach(item => this._query(item.q, item.resolve));
+      }
+    }
+
+    _onQuery(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var q = e.detail.q;
+      if (!q) {
+        e.detail.result = Promise.resolve([]);
+        return;
+      }
+      e.detail.result = new Promise((resolve) => {
+        if (!this._dataReady) {
+          if (!this.__pendingEvents) {
+            this.__pendingEvents = [];
+          }
+          this.__pendingEvents.push({
+            q: q,
+            resolve: resolve
+          });
+          return;
+        }
+        this._query(q, resolve);
+      });
+    }
+
+    _query(q, resolve) {
+      var searchResult = [];
+      Object.keys(this._elementsData).forEach(group => {
+        let elements = this._elementsData[group];
+        let result = this._searchGroup(group, elements, q);
+        if (result && result.length) {
+          searchResult = searchResult.concat(result);
+        }
+      });
+      resolve(searchResult);
+    }
+
+    _searchGroup(group, elements, q) {
+      q = q.toLowerCase();
+      var matches = elements.filter(item => {
+        return item.name.toLowerCase().indexOf(q) !== -1;
+      });
+
+      return matches;
+    }
+  }
+
+  window.customElements.define(SearchModule.is, SearchModule);
+  </script>
+</dom-module>

@@ -11,60 +11,58 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="catalog-icons.html">
-<dom-module id="search-input">
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<dom-module id="arc-search">
   <template>
     <style>
     :host {
       display: block;
     }
-
-    .container {
-      /*background-color: #fff;
-      padding: 20px;*/
-    }
     </style>
-    <div class="container">
-      <paper-input label="Search components" no-label-float type="search" on-change="_search" value="{{query}}">
-        <paper-icon-button slot="suffix" icon="catalog:search"></paper-icon-button>
-      </paper-input>
-    </div>
   </template>
   <script>
     /**
      * @customElement
      * @polymer
      */
-    class SearchInput extends Polymer.Element {
+    class SearchResults extends Polymer.Element {
       static get is() {
-        return 'search-input';
+        return 'arc-search';
       }
 
       static get properties() {
         return {
-          query: String
+          // Search query
+          query: {
+            type: String,
+            observer: '_queryChanged'
+          }
         };
       }
 
-      _search() {
-        if (!this.query) {
+      _queryChanged(q) {
+        if (!q) {
           return;
         }
-        var event = new CustomEvent('navigate', {
+        var event = new CustomEvent('element-search', {
           detail: {
-            path: '/search/' + encodeURIComponent(this.query).
-              replace(/%20/g, '+')
+            q: q
           },
           cancelable: true,
           composed: true
         });
         this.dispatchEvent(event);
+        if (!event.defaultPrevented) {
+          console.error('It isnt working :(');
+          return;
+        }
+        event.detail.result.then(result => {
+          console.log('query result', result);
+        });
       }
     }
 
-    window.customElements.define(SearchInput.is, SearchInput);
+    window.customElements.define(SearchResults.is, SearchResults);
   </script>
 </dom-module>
