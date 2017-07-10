@@ -22,6 +22,7 @@ the License.
 <link rel="import" href="element-properties.html">
 <link rel="import" href="element-methods.html">
 <link rel="import" href="element-events.html">
+<link rel="import" href="element-behaviors.html">
 <dom-module id="element-details">
   <template>
     <style include="markdown-styles">
@@ -46,14 +47,9 @@ the License.
       max-width: var(--text-block-max-width);
     }
 
-    .title {
-      @apply --layout-horizontal;
-      @apply --layout-end;
-      margin-bottom: 20px;
-    }
-
     .version {
       @apply --paper-font-headline;
+      margin-left: 12px;
     }
 
     .tagline {
@@ -68,39 +64,48 @@ the License.
     element-behaviors {
       margin-bottom: 40px;
     }
+
+    .page-data-loader {
+      @apply --layout-vertical;
+      @apply --layout-center;
+      margin-top: 40px;
+    }
     </style>
-    <template is="dom-if" if="{{loading}}">
-      <paper-spinner active></paper-spinner>
+    <template is="dom-if" if="[[loading]]">
+      <div class="page-data-loader">
+        <paper-spinner active></paper-spinner>
+      </div>
     </template>
-    <div class="title">
+    <template is="dom-if" if="[[error]]">
+      <page-404></page-404>
+    </template>
+    <template is="dom-if" if="[[_computeDisplayContent(loading, error)]]">
       <h1>[[package]]</h1>
-      <span hidden$="[[!elementMeta]]" class="version">v[[elementMeta.version]]</span>
-    </div>
-    <template is="dom-if" if="[[elementMeta.tagline]]">
-      <p class="tagline">[[elementMeta.tagline]]</p>
-    </template>
+      <template is="dom-if" if="[[elementMeta.tagline]]">
+        <p class="tagline">[[elementMeta.tagline]]</p>
+      </template>
 
-    <h2>Element: <span class="element-name">[[_elementData.name]]</span></h2>
+      <h2>[[_computeTitleLable(_elementData)]]: <span class="element-name">[[_elementData.name]]</span><span hidden$="[[!elementMeta]]" class="version">v[[elementMeta.version]]</span></h2>
 
-    <template is="dom-if" if="[[_elementData.description]]">
-      <marked-element class="element-description" markdown="[[_elementData.description]]">
-        <div slot="markdown-html"></div>
-      </marked-element>
+      <template is="dom-if" if="[[_elementData.description]]">
+        <marked-element class="element-description" markdown="[[_elementData.description]]">
+          <div slot="markdown-html"></div>
+        </marked-element>
+      </template>
+      <template is="dom-if" if="[[_hasValue(_elementData.properties)]]">
+        <element-properties data="[[_elementData.properties]]"></element-properties>
+      </template>
+      <template is="dom-if" if="[[_hasValue(_elementData.methods)]]">
+        <element-methods data="[[_elementData.methods]]"></element-methods>
+      </template>
+      <template is="dom-if" if="[[_hasValue(_elementData.events)]]">
+        <element-events data="[[_elementData.events]]"></element-events>
+      </template>
+      <template is="dom-if" if="[[_hasValue(_elementData.behaviors)]]">
+        <element-behaviors package="[[package]]" data="[[_elementData.behaviors]]"></element-behaviors>
+      </template>
     </template>
-    <template is="dom-if" if="[[_hasValue(_elementData.properties)]]">
-      <element-properties data="[[_elementData.properties]]"></element-properties>
-    </template>
-    <template is="dom-if" if="[[_hasValue(_elementData.methods)]]">
-      <element-methods data="[[_elementData.methods]]"></element-methods>
-    </template>
-    <template is="dom-if" if="[[_hasValue(_elementData.events)]]">
-      <element-events data="[[_elementData.events]]"></element-events>
-    </template>
-    <template is="dom-if" if="[[_hasValue(_elementData.behaviors)]]">
-      <element-behaviors data="[[_elementData.behaviors]]"></element-behaviors>
-    </template>
-    demos
-    <catalog-data package-name="[[package]]" package-data="{{_packageData}}" element-name="[[_computeElement(element, file)]]" element-data="{{_elementData}}"></catalog-data>
+    <catalog-data package-name="[[package]]" package-data="{{_packageData}}" element-name="[[_computeElement(element, file)]]" element-data="{{_elementData}}" on-element-error="_elementDataError"></catalog-data>
   </template>
   <script>
   /**
@@ -136,6 +141,11 @@ the License.
           type: Boolean,
           value: true
         },
+        // Set to true by the element when data couldn't be downloaded.
+        error: {
+          type: Boolean,
+          value: false
+        },
         // Element's metadata found in package definition
         elementMeta: {
           type: String,
@@ -149,6 +159,7 @@ the License.
     }
 
     _dataChanged(data) {
+      this.error = false;
       if (data) {
         this.loading = false;
       } else {
@@ -179,6 +190,21 @@ the License.
         return;
       }
       return _packageData.elements.find((element) => element.name === name);
+    }
+
+    _computeTitleLable(_elementData) {
+      return _elementData.isElement ? 'Element' : 'Behavior';
+    }
+
+    _elementDataError() {
+      this.loading = false;
+      this.error = true;
+      var resolvedPageUrl = this.resolveUrl('arc-404.html');
+      Polymer.importHref(resolvedPageUrl, null, null, true);
+    }
+
+    _computeDisplayContent(loading, error) {
+      return !loading && !error;
     }
   }
 

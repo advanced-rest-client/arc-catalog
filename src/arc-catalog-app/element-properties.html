@@ -24,11 +24,6 @@ the License.
   <template>
     <style include="element-docs-styles"></style>
     <style include="markdown-styles">
-    .type {
-      color: rgba(0, 0, 0, 0.54);
-      @apply --paper-font-body2;
-    }
-
     .property-meta {
       margin-left: 12px;
       @apply --paper-font-body2;
@@ -120,18 +115,10 @@ the License.
         return item;
       });
 
-      var publicMethods = data.filter(i => i.privacy === 'public');
-      var protectedMethods = data.filter(i => i.privacy !== 'public');
-      publicMethods = publicMethods.map(i => {
-        i.public = true;
-        return i;
-      });
-      protectedMethods = protectedMethods.map(i => {
-        i.public = false;
-        return i;
-      });
-      this._setHasProtected(protectedMethods.length > 0);
-      this._setModel(publicMethods.concat(protectedMethods));
+      data = this._setPrivacyInfo(data);
+      var hasPrivate = this._hasPrivatePropery(data);
+      this._setHasProtected(hasPrivate);
+      this._setModel(data);
     }
 
     _computeNamePropertiesHidden(item) {

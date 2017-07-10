@@ -213,14 +213,6 @@ class CatalogData extends Polymer.Element {
     .then((json) => {
       DataObserver.groups = json;
       this.set('groups', json);
-    })
-    .catch((cause) => {
-      let error = new Error('Can\'t set components definitions.');
-      this.fire('general-error', {
-        message: error.message,
-        genericMessage: cause.message
-      });
-      throw cause;
     });
   }
 
@@ -236,7 +228,7 @@ class CatalogData extends Polymer.Element {
     .then((response) => {
       if (!response.ok) {
         let error = new Error('Can\'t download components definitions: ' + packageName);
-        this.fire('general-error', {
+        this.fire('package-error', {
           message: error.message
         });
         throw error;
@@ -245,14 +237,6 @@ class CatalogData extends Polymer.Element {
     })
     .then((json) => {
       DataObserver.addPackage(packageName, json);
-    })
-    .catch((cause) => {
-      let error = new Error('Can\'t set components definitions: ' + packageName);
-      this.fire('general-error', {
-        message: error.message,
-        genericMessage: cause.message
-      });
-      throw cause;
     });
   }
 
@@ -269,7 +253,7 @@ class CatalogData extends Polymer.Element {
     .then((response) => {
       if (!response.ok) {
         let error = new Error('Can\'t download element definition.');
-        this.fire('general-error', {
+        this.fire('element-error', {
           message: error.message
         });
         throw error;
@@ -278,14 +262,6 @@ class CatalogData extends Polymer.Element {
     })
     .then((json) => {
       DataObserver.addElements(elementName, json);
-    })
-    .catch((cause) => {
-      let error = new Error('Can\'t set element definition.');
-      this.fire('general-error', {
-        message: error.message,
-        genericMessage: cause.message
-      });
-      throw cause;
     });
   }
 
@@ -301,7 +277,7 @@ class CatalogData extends Polymer.Element {
     .then((response) => {
       if (!response.ok) {
         let error = new Error('Can\'t download bundle definition.');
-        this.fire('general-error', {
+        this.fire('bundle-error', {
           message: error.message
         });
         throw error;
@@ -310,14 +286,6 @@ class CatalogData extends Polymer.Element {
     })
     .then((json) => {
       DataObserver.addBundle(bundle, json);
-    })
-    .catch((cause) => {
-      let error = new Error('Can\'t set bundle definition.');
-      this.fire('general-error', {
-        message: error.message,
-        genericMessage: cause.message
-      });
-      throw cause;
     });
   }
 }

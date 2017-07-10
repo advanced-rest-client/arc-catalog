@@ -16,6 +16,7 @@ the License.
 /**
  * Contains a common methods for documentation elements.
  */
+// jshint unused:false
 var DocsMixin = function(superClass) {
   return class extends superClass {
 
@@ -106,6 +107,35 @@ var DocsMixin = function(superClass) {
 
     _computeProtectedToggleLabel(withProtected) {
       return withProtected ? 'Hide' : 'Show';
+    }
+    /**
+     * Filters a properties array by the `privacy` property and sets `public`
+     * boolean property on the data model .
+     *
+     * @param {Array} array An array to filter on
+     * @return {Array} Array with altered items. Each item has `public`
+     * property describing it's privacy setting.
+     */
+    _setPrivacyInfo(array) {
+      array = array.map(item => {
+        if (item.privacy === 'public') {
+          item.public = true;
+        } else {
+          item.public = false;
+        }
+        return item;
+      });
+      return array;
+    }
+    /**
+     * Checks if an array has a private property.
+     *
+     * @param {array} array An array of properties.
+     * @return {Boolean} True if any of properties has `public` property set to
+     * false.
+     */
+    _hasPrivatePropery(array) {
+      return array.some(item => item.public === false);
     }
   };
 };

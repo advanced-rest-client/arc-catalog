@@ -23,7 +23,6 @@ the License.
 <link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../search-input.html">
@@ -91,8 +90,8 @@ the License.
     }
 
     .drawer-content {
-      margin-top: 128px;
-      height: calc(100% - 128px);
+      margin-top: var(--drawer-content-top, 128px);
+      height: calc(100% - var(--drawer-content-top, 128px));
       overflow: auto;
     }
 
@@ -111,8 +110,8 @@ the License.
     <app-route route="{{route}}" pattern="/:package" data="{{routeData}}" tail="{{subroute}}"></app-route>
     <app-route route="{{subroute}}" pattern="/:element/:file" data="{{subrouteData}}"></app-route>
 
-    <app-header-layout fullbleed has-scrolling-region>
-      <app-header fixed effects="waterfall" slot="header">
+    <app-header-layout fullbleed id="layout">
+      <app-header condenses reveals effects="waterfall" slot="header">
         <app-toolbar>
           <template is="dom-if" if="[[!_computeNarrowDrawer(routeData.*)]]">
             <paper-icon-button icon="catalog:menu" on-tap="_toggleDrawer"></paper-icon-button>
@@ -158,6 +157,7 @@ the License.
       static get is() {
         return 'arc-catalog-app';
       }
+
       static get properties() {
         return {
           route: {
@@ -180,7 +180,9 @@ the License.
             observer: '_pageChanged'
           },
           // Currently selected element
-          element: String
+          element: String,
+          // A handler for the scroll event
+          _scrollHandler: Object
         };
       }
 
@@ -190,10 +192,41 @@ the License.
         ];
       }
 
+      connectedCallback() {
+        super.connectedCallback();
+        if (!this._scrollHandler) {
+          this._scrollHandler = this._onScroll.bind(this);
+        }
+        window.addEventListener('scroll', this._scrollHandler);
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        window.removeEventListener('scroll', this._scrollHandler);
+      }
+
+      _onScroll() {
+        var state = this.$.layout.header.getScrollState();
+        var top = state.top;
+        var drawerTop = 128;
+        drawerTop -= top;
+        if (drawerTop < 0) {
+          drawerTop = 0;
+        }
+        if (this.__previousDrawerTop === drawerTop) {
+          return;
+        }
+        this.__previousDrawerTop = drawerTop;
+        this.updateStyles({
+          '--drawer-content-top': drawerTop + 'px'
+        });
+      }
+
       _routeChanged(routeRecord, subrouteRecord) {
         var route = routeRecord.base;
         if (!route || !route.package) {
           this.page = 'index';
+          window.scroll(0, 0);
           return;
         }
         var sub = subrouteRecord.base;
@@ -201,10 +234,12 @@ the License.
           default:
             if (!sub || !sub.element || !this.subroute.path) {
               this.page = 'package';
+              window.scroll(0, 0);
               return;
             }
             if (sub.element) {
               this.page = 'element';
+              window.scroll(0, 0);
               return;
             }
         }
@@ -214,7 +249,6 @@ the License.
       _pageChanged(page) {
         var resolvedPageUrl = this.resolveUrl('arc-' + page + '.html');
         Polymer.importHref(resolvedPageUrl, null, this._showPage404.bind(this), true);
-        // this._computeElement();
       }
 
       _showPage404() {

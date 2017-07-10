@@ -23,7 +23,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     h4 {
       @apply --paper-font-title;
-      margin: 0;
+      margin-right: 0 4px 0 0;
     }
 
     .property {
@@ -32,7 +32,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     .title {
       @apply --layout-horizontal;
-      @apply --layout-end;
+      @apply --layout-center;
       margin: 1.03em 0;
     }
 
@@ -44,6 +44,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     .deep-link {
       color: currentcolor;
       text-decoration: none;
+    }
+
+    .type {
+      color: rgba(0, 0, 0, 0.54);
+      @apply --paper-font-body2;
+      font-size: 20px;
+    }
+
+    .arg-name {
+      color: rgb(211, 44, 58);
+      @apply --paper-font-body1;
+      font-size: 20px;
     }
 
     .protected-actions {

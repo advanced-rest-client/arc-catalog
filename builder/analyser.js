@@ -1,6 +1,9 @@
 'use strict';
 
-const {Analyzer, FSUrlLoader} = require('polymer-analyzer');
+const {
+  Analyzer,
+  FSUrlLoader
+} = require('polymer-analyzer');
 const path = require('path');
 const colors = require('colors/safe');
 const bowerPath = path.resolve('elements-data/bower_components/');
@@ -8,6 +11,10 @@ const bowerPath = path.resolve('elements-data/bower_components/');
 let analyzer = new Analyzer({
   urlLoader: new FSUrlLoader(bowerPath)
 });
+
+const instanceMethods = [
+  'created', 'ready', 'attached', 'detached', 'attributeChanged'
+];
 
 class Analysis {
   constructor(packages) {
@@ -18,6 +25,7 @@ class Analysis {
   createModels() {
     var info = this.packages.shift();
     if (!info) {
+      this._updateBehaviorsRefs();
       return Promise.resolve(this.models);
     }
     return this._runAnalysis(info);
@@ -25,18 +33,22 @@ class Analysis {
 
   _runAnalysis(info) {
     return analyzer.analyze(info.urls).then((analysis) => {
-      return this._getElementsInfo(info.name, analysis);
-    })
-    .then(model => {
-      this._concatModels(model);
-      return this.createModels();
-    });
+        return this._getElementsInfo(info.name, analysis);
+      })
+      .then(model => {
+        this._concatModels(model);
+        return this.createModels();
+      });
   }
 
-  _concatModels(elements) {
+  _concatModels(info) {
     var current = this.models;
-    var unique = elements.filter(model => {
+    var unique = info.elements.filter(model => {
       return !this._nameFilter(model.tagName, current);
+    });
+    this.models = this.models.concat(unique);
+    unique = info.behaviors.filter(model => {
+      return !this._behaviorNameFilter(model.name, current);
     });
     this.models = this.models.concat(unique);
   }
@@ -45,19 +57,45 @@ class Analysis {
     return models.some(model => model.tagName === name);
   }
 
+  _behaviorNameFilter(name, models) {
+    return models.some(model => model.name === name);
+  }
+
   _getElementsInfo(group, analysis) {
     this._printAnalyserWarnings(analysis.getWarnings());
-    const elements = analysis.getFeatures({kind: 'element', externalPackages: true});
+    const elements = analysis.getFeatures({
+      kind: 'element',
+      externalPackages: true
+    });
+    const behaviors = analysis.getFeatures({
+      kind: 'behavior',
+      externalPackages: true
+    });
     var it = elements.entries();
-    var analysed = [];
+    var analysedElements = [];
+    var analysedBehaviors = [];
     while (true) {
       let next = it.next();
       if (!next.value) {
-        return Promise.resolve(analysed);
+        break;
       }
-      var data = this._analyseElement(group, next.value);
+      let data = this._analyseElement(group, next.value);
       if (data) {
-        analysed.push(data);
+        analysedElements.push(data);
+      }
+    }
+    it = behaviors.entries();
+    while (true) {
+      let next = it.next();
+      if (!next.value) {
+        return Promise.resolve({
+          elements: analysedElements,
+          behaviors: analysedBehaviors
+        });
+      }
+      let data = this._analyseBehavior(group, next.value);
+      if (data) {
+        analysedBehaviors.push(data);
       }
     }
   }
@@ -74,9 +112,8 @@ class Analysis {
   _analyseElement(group, analysisResult) {
     var element = analysisResult[0];
     var result = {
-      name: this.elementName(element),
-      hero: this.elementHero(element),
-      description: this.elementDescription(element),
+      isElement: true,
+      description: element.description,
       properties: this.elementProperties(element),
       methods: this.elementMethods(element),
       events: this.elementEvents(element),
@@ -91,9 +128,34 @@ class Analysis {
     return result;
   }
 
+  _analyseBehavior(group, analysisResult) {
+    var element = analysisResult[0];
+    var result = {
+      isBehavior: true,
+      name: element.name,
+      description: element.description,
+      properties: this.elementProperties(element),
+      methods: this.elementMethods(element),
+      events: this.elementEvents(element),
+      behaviors: this.elementBehaviors(element),
+      demos: this.elementDemos(element),
+      fileLocation: this.elementLocation(element),
+      package: this.elementPackage(element),
+      group: group,
+      ref: this.createBehaviorRef(element)
+    };
+    return result;
+  }
+
   createRef(analysisResult) {
     var ref = [analysisResult.package, analysisResult.tagName].join('/');
     return ref;
+  }
+
+  createBehaviorRef(elements) {
+    var location = elements.sourceRange.file;
+    location = location.replace('.html', '');
+    return location;
   }
 
   elementName(analysis) {
@@ -102,22 +164,6 @@ class Analysis {
       name: analysis.name || analysis.tagName
     };
     return result;
-  }
-
-  elementHero(analysis) {
-    var tags = analysis.jsdoc.tags;
-    if (!tags || !tags.length) {
-      return;
-    }
-    var tag = tags.find(_tag => _tag.title === 'hero');
-    if (!tag) {
-      return;
-    }
-    return tag.description;
-  }
-
-  elementDescription(analysis) {
-    return analysis.description;
   }
 
   elementProperties(analysis) {
@@ -155,20 +201,23 @@ class Analysis {
     var methods = analysis.methods;
     var result = [];
     methods.forEach((value) => {
+      if (instanceMethods.indexOf(value.name) !== -1) {
+        return;
+      }
       result.push(this._extractMethod(value));
     });
     return result;
   }
 
   _extractMethod(value) {
-    var jsdoc = value.jsdoc;
     var result = {
       name: value.name,
       inheritedFrom: value.inheritedFrom,
-      description: jsdoc ? jsdoc.description : value.description,
-      args: jsdoc ? jsdoc.tags : [],
+      description: value.description,
+      params: value.params,
       return: value.return,
-      type: value.type
+      type: value.type,
+      privacy: value.privacy
     };
     if (value.inheritedFrom && value.sourceRange) {
       result.sourceLocation = value.sourceRange.file;
@@ -186,11 +235,10 @@ class Analysis {
   }
 
   _extractEvent(value) {
-    var jsdoc = value.jsdoc;
     var result = {
       name: value.name,
       inheritedFrom: value.inheritedFrom,
-      description: jsdoc ? jsdoc.description : value.description,
+      description: value.description,
       params: value.params
     };
     if (value.inheritedFrom && value.sourceRange) {
@@ -228,6 +276,32 @@ class Analysis {
     var location = analysis.sourceRange.file;
     var parts = location.split('/');
     return parts[0];
+  }
+  /**
+   * Updates refs to the behaviors found in elements.
+   * Before calling this method each element has a `bahaviors` array with
+   * list of strings. This will be replaces to list of objects with `name`
+   * and `ref` keys.
+   */
+  _updateBehaviorsRefs() {
+    this.models = this.models.map(model => {
+      if (!model.behaviors.length) {
+        return model;
+      }
+      for (let i = 0, len = model.behaviors.length; i < len; i++) {
+        let name = model.behaviors[i];
+        let behavior = this._findBehavior(name);
+        model.behaviors[i] = {
+          name: name,
+          ref: behavior ? behavior.ref : undefined
+        };
+      }
+      return model;
+    });
+  }
+
+  _findBehavior(name) {
+    return this.models.find(item => item.isBehavior && item.name === name);
   }
 }
 

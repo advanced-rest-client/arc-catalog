@@ -21,7 +21,23 @@ the License.
 <link rel="import" href="element-docs-styles.html">
 <dom-module id="element-methods">
   <template>
-    <style include="element-docs-styles"></style>
+    <style include="element-docs-styles">
+    .property-meta {
+      margin-left: 12px;
+
+      color: rgba(0, 0, 0, 0.74);
+    }
+
+    .meta-name {
+      @apply --paper-font-body1;
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    .meta-type {
+      @apply --paper-font-body2;
+      color: rgba(0, 0, 0, 0.54);
+    }
+    </style>
     <style include="markdown-styles"></style>
     <h3>Methods</h3>
     <template is="dom-repeat" items="[[model]]">
@@ -33,9 +49,7 @@ the License.
           (
           <span class="arguments">
             <template is="dom-repeat" items="[[item.params]]" as="p">
-              <span hidden$="[[!index]]">, </span>
-              <span class="arg-name">[[p.name]]</span>
-              <span hidden$="[[!p.type]]">: <span class="arg-type">[[p.type]]</span></span>
+              <span hidden$="[[!index]]">, </span><span class="arg-name">[[p.name]]</span><span hidden$="[[!p.type]]">: <span class="type">[[p.type]]</span></span>
             </template>
           </span>
           )
@@ -47,6 +61,18 @@ the License.
         <marked-element class="description" markdown="[[item.description]]">
           <div slot="markdown-html"></div>
         </marked-element>
+      </template>
+
+      <template is="dom-repeat" items="[[item.params]]" as="p">
+        <p class="property-meta">
+          <span class="meta-name">[[p.name]]</span>
+          <span hidden$="[[!p.type]]">: <span class="meta-type">[[p.type]]</span></span>
+          <template is="dom-if" if="[[p.description]]">
+            <marked-element class="description" markdown="[[p.description]]">
+              <div slot="markdown-html"></div>
+            </marked-element>
+          </template>
+        </p>
       </template>
     </div>
   </template>
@@ -86,20 +112,10 @@ the License.
         item.id = this._computeDeepLink('method', item.name);
         return item;
       });
-
-      var publicMethods = data.filter(i => i.name[0] !== '_');
-      var protectedMethods = data.filter(i => i.name[0] === '_');
-      publicMethods = publicMethods.map(i => {
-        i.public = true;
-        return i;
-      });
-      protectedMethods = protectedMethods.map(i => {
-        i.public = false;
-        return i;
-      });
-
-      this._setHasProtected(protectedMethods.length > 0);
-      this._setModel(publicMethods.concat(protectedMethods));
+      data = this._setPrivacyInfo(data);
+      var hasPrivate = this._hasPrivatePropery(data);
+      this._setHasProtected(hasPrivate);
+      this._setModel(data);
     }
   }
 
