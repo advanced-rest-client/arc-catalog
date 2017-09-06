@@ -67,6 +67,11 @@ the License.
       @apply --layout-horizontal;
       @apply --layout-center;
     }
+
+    .links {
+      margin-left: 12px;
+      margin-top: 24px;
+    }
     </style>
     <template is="dom-if" if="[[loading]]">
       <paper-spinner active></paper-spinner>
@@ -95,6 +100,15 @@ the License.
           </a>
         </template>
       </iron-selector>
+
+      <div class="links">
+        <template is="dom-if" if="[[bundleData.github]]">
+          <paper-icon-button icon="catalog:github" data-url$="[[bundleData.github]]" on-tap="_openLink" title="Open GitHub page"></paper-icon-button>
+        </template>
+        <template is="dom-if" if="[[bundleData.homepage]]">
+          <paper-icon-button icon="catalog:home" data-url$="[[bundleData.homepage]]" on-tap="_openLink" title="Open homepage"></paper-icon-button>
+        </template>
+      </div>
     </template>
     <catalog-data bundle="[[element]]" bundle-data="{{bundleData}}"></catalog-data>
     <paper-toast></paper-toast>
@@ -155,6 +169,14 @@ the License.
         var toast = this.shadowRoot.querySelector('paper-toast');
         toast.text = 'Commaned copied to clipboard';
         toast.opened = true;
+      }
+
+      _openLink(e) {
+        var url = e.target.dataset.url;
+        if (!url) {
+          return;
+        }
+        window.open(url);
       }
     }
 

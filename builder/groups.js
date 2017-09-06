@@ -59,7 +59,9 @@ class GroupsAnalyser {
         description: bower.description,
         version: bower.version,
         license: bower.license,
-        elements: main
+        elements: main,
+        github: this._computeGithubUrl(bower.repository),
+        homepage: bower.homepage
       };
     });
   }
@@ -106,6 +108,27 @@ class GroupsAnalyser {
     }
     this.bowers[name] = bower;
     return bower;
+  }
+
+  _computeGithubUrl(repository) {
+    if (!repository) {
+      return;
+    }
+    var url = repository.url;
+    if (!url) {
+      return;
+    }
+    if (url.indexOf('git:') === 0) {
+      url = url.replace('git:', 'https:');
+    }
+    if (url.indexOf('git@github.com:') === 0) {
+      url = url.replace('git@github.com:', 'https://github.com/');
+    }
+    var lastIndex = url.lastIndexOf('.git');
+    if (lastIndex > 0 && lastIndex === url.length - 4) {
+      url = url.substr(0, lastIndex);
+    }
+    return url;
   }
 
 }
