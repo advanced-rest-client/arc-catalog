@@ -13,7 +13,9 @@ class GroupsAnalyser {
       return fs.readJson(info.url).then(json => {
         return {
           name: info.name,
-          dependencies: json.dependencies
+          dependencies: json.dependencies,
+          description: json.description,
+          version: json.version
         };
       });
     });
@@ -34,11 +36,9 @@ class GroupsAnalyser {
 
   computeGroups(groupInfo) {
     var info = groupInfo.map((group) => {
-      let result = {
-        name: group.name,
-        elements: this.mapDependencies(group.dependencies)
-      };
-      return result;
+      group.elements = this.mapDependencies(group.dependencies);
+      delete group.dependencies;
+      return group;
     });
     return info;
   }

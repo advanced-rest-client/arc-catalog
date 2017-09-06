@@ -31,16 +31,33 @@ the License.
     }
 
     h1 {
-      @apply --paper-font-display1;
+      @apply --paper-font-display2;
+      margin-bottom: 0;
+      margin-right: 12px;
       margin-left: 24px;
-      padding-left: 12px;
+    }
+
+    .tagline {
+      @apply --paper-font-headline;
+      max-width: var(--text-block-max-width);
+      color: rgba(0, 0, 0, 0.54);
+      margin-bottom: 1.33em;
+      margin-left: 24px;
+    }
+
+    .version {
+      @apply --paper-font-headline;
+      margin-left: 12px;
     }
     </style>
     <template is="dom-if" if="{{loading}}">
       <paper-spinner active></paper-spinner>
     </template>
     <template is="dom-if" if="{{!loading}}">
-      <h1>Package: [[data.name]]</h1>
+      <h1>Package: [[data.name]] <span hidden$="[[!data.version]]" class="version">v[[data.version]]</span></h1>
+      <template is="dom-if" if="[[data.description]]">
+        <p class="tagline">[[data.description]]</p>
+      </template>
       <elements-list elements="[[data.elements]]" package="[[data.name]]"></elements-list>
     </template>
     <catalog-data package-name="{{package}}" package-data="{{data}}"></catalog-data>

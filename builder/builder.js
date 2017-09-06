@@ -65,6 +65,7 @@ class CatalogBuilder {
   }
 
   saveGroupsInfo() {
+    debugger;
     const packages = this.packages.map(item => {
       return Object.assign({}, item, {
         ref: item.name
@@ -74,6 +75,7 @@ class CatalogBuilder {
   }
 
   savePackagesInfo() {
+    debugger;
     this.groupsInfo.forEach(group => {
       group.elements = this._processPackageElements(group.elements);
     });

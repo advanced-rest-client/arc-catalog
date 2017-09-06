@@ -31,6 +31,7 @@ the License.
 <link rel="import" href="catalog-data.html">
 <link rel="import" href="package-navigation.html">
 <link rel="import" href="element-navigation.html">
+<link rel="import" href="demo-preview.html">
 <dom-module id="arc-catalog-app">
   <template>
     <style>
@@ -150,6 +151,7 @@ the License.
       </app-drawer-layout>
     </app-header-layout>
     <catalog-data groups="{{data.groups}}"></catalog-data>
+    <demo-preview with-backdrop></demo-preview>
   </template>
   <script>
     /**
@@ -205,9 +207,13 @@ the License.
         if (!this._navigateHandler) {
           this._navigateHandler = this._onNavigate.bind(this);
         }
+        if (!this._demoRunHandler) {
+          this._demoRunHandler = this._onDemoRun.bind(this);
+        }
         Polymer.RenderStatus.afterNextRender(this, () => {
           window.addEventListener('scroll', this._scrollHandler);
           this.addEventListener('navigate', this._navigateHandler);
+          this.addEventListener('display-demo', this._demoRunHandler);
         });
       }
 
@@ -215,6 +221,7 @@ the License.
         super.disconnectedCallback();
         window.removeEventListener('scroll', this._scrollHandler);
         this.removeEventListener('navigate', this._navigateHandler);
+        this.removeEventListener('display-demo', this._demoRunHandler);
       }
 
       _onScroll() {
@@ -311,6 +318,12 @@ the License.
       _onNavigate(e) {
         var path = e.detail.path;
         this.set('route.path', path || '/');
+      }
+
+      _onDemoRun(e) {
+        var preview = this.shadowRoot.querySelector('demo-preview');
+        preview.src = e.detail.src;
+        preview.opened = true;
       }
     }
 
