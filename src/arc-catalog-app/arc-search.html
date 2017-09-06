@@ -13,6 +13,7 @@ the License.
 -->
 
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="elements-list.html">
 <dom-module id="arc-search">
   <template>
     <style>
@@ -20,6 +21,8 @@ the License.
       display: block;
     }
     </style>
+
+    <elements-list elements="[[results]]"></elements-list>
   </template>
   <script>
     /**
@@ -37,7 +40,10 @@ the License.
           query: {
             type: String,
             observer: '_queryChanged'
-          }
+          },
+          results: Array,
+          _recentQuery: String,
+          _recentResults: Array
         };
       }
 
@@ -45,12 +51,18 @@ the License.
         if (!q) {
           return;
         }
+        if (this._recentQuery === q) {
+          this.set('results', this._recentResults);
+          return;
+        }
+        this._recentQuery = q;
         var event = new CustomEvent('element-search', {
           detail: {
             q: q
           },
           cancelable: true,
-          composed: true
+          composed: true,
+          bubbles: true
         });
         this.dispatchEvent(event);
         if (!event.defaultPrevented) {
@@ -59,6 +71,8 @@ the License.
         }
         event.detail.result.then(result => {
           console.log('query result', result);
+          this._recentResults = result;
+          this.set('results', result);
         });
       }
     }

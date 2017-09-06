@@ -112,7 +112,7 @@ the License.
         <element-behaviors package="[[package]]" data="[[_elementData.behaviors]]"></element-behaviors>
       </template>
     </template>
-    <catalog-data package-name="[[package]]" package-data="{{_packageData}}" element-name="[[_computeElement(element, file)]]" element-data="{{_elementData}}" on-element-error="_elementDataError"></catalog-data>
+    <catalog-data package-name="[[_computePackage(package,opened)]]" package-data="{{_packageData}}" element-name="[[_computeElement(element, file)]]" element-data="{{_elementData}}" on-element-error="_elementDataError"></catalog-data>
   </template>
   <script>
   /**
@@ -157,7 +157,9 @@ the License.
         elementMeta: {
           type: String,
           computed: '_computeElementMeta(_packageData, element)'
-        }
+        },
+        // True if the element is currently displayed.
+        opened: Boolean
       };
     }
 
@@ -231,6 +233,13 @@ the License.
         composed: true
       });
       this.dispatchEvent(event);
+    }
+
+    _computePackage(packageName, opened) {
+      if (!opened) {
+        return;
+      }
+      return packageName;
     }
   }
 

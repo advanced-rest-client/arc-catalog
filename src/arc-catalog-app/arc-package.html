@@ -60,7 +60,7 @@ the License.
       </template>
       <elements-list elements="[[data.elements]]" package="[[data.name]]"></elements-list>
     </template>
-    <catalog-data package-name="{{package}}" package-data="{{data}}"></catalog-data>
+    <catalog-data package-name="[[_computePackage(package,opened)]]" package-data="{{data}}"></catalog-data>
   </template>
   <script>
     /**
@@ -87,7 +87,9 @@ the License.
           loading: {
             type: Boolean,
             value: true
-          }
+          },
+          // True if the element is currently displayed.
+          opened: Boolean
         };
       }
 
@@ -97,6 +99,13 @@ the License.
         } else {
           this.loading = false;
         }
+      }
+
+      _computePackage(packageName, opened) {
+        if (!opened) {
+          return;
+        }
+        return packageName;
       }
     }
 

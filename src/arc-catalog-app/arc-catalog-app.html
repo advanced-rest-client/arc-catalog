@@ -32,6 +32,7 @@ the License.
 <link rel="import" href="package-navigation.html">
 <link rel="import" href="element-navigation.html">
 <link rel="import" href="demo-preview.html">
+<link rel="import" href="search-module.html">
 <dom-module id="arc-catalog-app">
   <template>
     <style>
@@ -140,7 +141,7 @@ the License.
           </div>
         </app-drawer>
         <div>
-          <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="404" role="main">
+          <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="404" role="main" selected-attribute="opened">
             <index-page name="index" packages="[[data.groups]]"></index-page>
             <package-list name="package" package="[[routeData.package]]"></package-list>
             <element-details name="element" package="[[routeData.package]]" element="[[subrouteData.element]]" file="[[subrouteData.file]]"></element-details>
@@ -152,6 +153,7 @@ the License.
     </app-header-layout>
     <catalog-data groups="{{data.groups}}"></catalog-data>
     <demo-preview with-backdrop></demo-preview>
+    <search-module></search-module>
   </template>
   <script>
     /**
@@ -299,20 +301,7 @@ the License.
       }
 
       _searchInput() {
-        if (this._searchModuleInitializing || this._searchModule) {
-          return;
-        }
-        this._searchModuleInitializing = true;
-        var resolvedPageUrl = this.resolveUrl('search-module.html');
-        Polymer.importHref(resolvedPageUrl, () => {
-          let mod = document.createElement('search-module');
-          this.shadowRoot.appendChild(mod);
-          this._searchModule = mod;
-          this._searchModuleInitializing = false;
-        }, () => {
-          console.error('Cannot load search module :(');
-          this._searchModuleInitializing = false;
-        }, true);
+        
       }
 
       _onNavigate(e) {

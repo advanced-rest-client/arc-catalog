@@ -78,6 +78,9 @@ the License.
     }
 
     _computeDownloadsLeft(groups) {
+      if (this._packagesLeft) {
+        return;
+      }
       this._packagesLeft = groups.length;
     }
 
@@ -143,7 +146,11 @@ the License.
       var matches = elements.filter(item => {
         return item.name.toLowerCase().indexOf(q) !== -1;
       });
-
+      matches = matches.map(item => {
+        var result = Object.assign({}, item);
+        result.ref = '/' + group + '/' + item.ref;
+        return result;
+      });
       return matches;
     }
   }

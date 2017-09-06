@@ -93,6 +93,9 @@ the License.
       }
 
       _packageLink(ref, packageName) {
+        if (!packageName) {
+          return ref;
+        }
         return packageName + '/' + ref;
       }
 
