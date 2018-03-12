@@ -28,7 +28,6 @@ the License.
 <link rel="import" href="/bower_components/polymer/lib/utils/render-status.html">
 <link rel="import" href="../search-input.html">
 <link rel="import" href="../catalog-icons.html">
-<link rel="import" href="catalog-data.html">
 <link rel="import" href="package-navigation.html">
 <link rel="import" href="element-navigation.html">
 <link rel="import" href="demo-preview.html">
@@ -142,7 +141,7 @@ the License.
         </app-drawer>
         <div>
           <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="404" role="main" selected-attribute="opened">
-            <index-page name="index" packages="[[data.groups]]"></index-page>
+            <index-page name="index"></index-page>
             <package-list name="package" package="[[routeData.package]]"></package-list>
             <element-details name="element" package="[[routeData.package]]" element="[[subrouteData.element]]" file="[[subrouteData.file]]"></element-details>
             <arc-search name="search" query="[[searchParams.query]]"></arc-search>
@@ -151,7 +150,6 @@ the License.
         </div>
       </app-drawer-layout>
     </app-header-layout>
-    <catalog-data groups="{{data.groups}}"></catalog-data>
     <demo-preview with-backdrop></demo-preview>
     <search-module></search-module>
   </template>
@@ -172,14 +170,6 @@ the License.
           },
           routeData: {
             type: Object
-          },
-          data: {
-            type: Object,
-            value: function() {
-              return {
-                groups: []
-              };
-            }
           },
           page: {
             type: String,
@@ -301,7 +291,7 @@ the License.
       }
 
       _searchInput() {
-        
+
       }
 
       _onNavigate(e) {

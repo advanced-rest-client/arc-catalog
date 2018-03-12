@@ -15,6 +15,7 @@ the License.
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="package-tile.html">
 
@@ -32,8 +33,8 @@ the License.
     }
 
     .packages-list {
-      @apply(--layout-horizontal);
-      @apply(--layout-wrap);
+      @apply --layout-horizontal;
+      @apply --layout-wrap;
     }
 
     package-tile {
@@ -51,6 +52,11 @@ the License.
         </template>
       </div>
     </section>
+    <iron-ajax
+      auto
+      url="/api/groups"
+      handle-as="json"
+      on-response="_responseHandler"></iron-ajax>
   </template>
 
   <script>
@@ -74,8 +80,38 @@ the License.
         };
       }
 
+      get colors() {
+        return [
+          '#FFCDD2',
+          '#ce93d8',
+          '#b0bec5',
+          '#ffb74d',
+          '#81D4FA'
+        ];
+      }
+
       _packageLink(ref) {
         return '' + ref;
+      }
+
+      _responseHandler(e) {
+        let response = e.detail.response;
+        let items = response.items;
+        this.packages = items.map((item) => this._setupItem(item));
+      }
+
+      _setupItem(item) {
+        if (!item.color) {
+          item.color = this.randomColor();
+        }
+        item.title = item.name;
+        return item;
+      }
+
+      randomColor() {
+        const colors = this.colors;
+        const i = Math.floor(Math.random() * colors.length);
+        return colors[i];
       }
     }
 

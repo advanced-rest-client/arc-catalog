@@ -50,11 +50,11 @@ the License.
     }
 
     :host(:hover) .content {
-      @apply(--shadow-elevation-4dp);
+      @apply --shadow-elevation-4dp;
     }
 
     h2 {
-      @apply(--paper-font-display2);
+      @apply --paper-font-display2;
       margin: 20px 0;
       transform: translate(-50px, 0);
       opacity: 0;
@@ -68,7 +68,7 @@ the License.
     }
 
     h3 {
-      @apply(--paper-font-title);
+      @apply --paper-font-title;
       white-space: pre-wrap;
       transform: translate(-50px, 0);
       opacity: 0;
@@ -132,7 +132,7 @@ the License.
       transform: translate(-50px, 0);
       opacity: 0;
       height: 40px;
-      @apply(--paper-font-body2);
+      @apply --paper-font-body2;
     }
 
      :host(.active) .tagline {
@@ -141,8 +141,6 @@ the License.
     }
     </style>
     <section class="content">
-      <span class="version">[[package.version]]</span>
-      <h2 class="symbol">[[package.symbol]]</h2>
       <h3 class="title" extended$="[[_extendedTitle(package.title)]]">[[package.title]]</h3>
       <hr themed-reverse>
       <p class="tagline">[[package.tagline]]</p>
